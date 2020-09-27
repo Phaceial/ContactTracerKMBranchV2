@@ -1,0 +1,33 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Using EditTextPreference for time and ListPreference
+    for distance to demonstrate both types -->
+    <PreferenceCategory app:title="Tracing Variables">
+        <EditTextPreference
+            app:defaultValue="5"
+            app:key="pref_contact_time"
+            app:title="Minimum stop time in minutes"
+            app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            app:defaultValue="1"
+            app:entries="@array/distance_entries"
+            app:entryValues="@array/distance_values"
+            app:key="pref_distance"
+            app:title="Maximum distance"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <!-- Using a simple Preference for UUID Regeneration, because it can
+    easily accept a PreferenceClick event listener -->
+    <PreferenceCategory app:title="Unique ID">
+
+        <Preference
+            app:key="pref_uuid"
+            app:title="Generate new ID"
+            app:summary="Generate a new ID to prevent eavesdropping"/>
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

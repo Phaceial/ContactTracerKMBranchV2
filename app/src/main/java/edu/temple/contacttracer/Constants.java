@@ -1,0 +1,9 @@
+package edu.temple.contacttracer;
+
+public class Constants {
+    public static final String PREF_KEY_UUID = "pref_uuid";
+    public static final String PREF_KEY_CONTACT_TIME = "pref_contact_time";
+    public static final String PREF_KEY_DISTANCE = "pref_distance";
+    public static final int CONTACT_TIME_DEFAULT = 5;
+    public static final int DISTANCE_DEFAULT = 3;
+}
