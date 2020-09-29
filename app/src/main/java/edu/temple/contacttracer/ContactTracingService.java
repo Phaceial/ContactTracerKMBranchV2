@@ -42,14 +42,14 @@ public class ContactTracingService extends Service {
         // SharedPreferences that is object automatically
         // used by Settings framework
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        tracingTime = sharedPreferences.getInt(Constants.PREF_KEY_CONTACT_TIME, Constants.CONTACT_TIME_DEFAULT);
+        tracingTime = Integer.parseInt(sharedPreferences.getString(Constants.PREF_KEY_CONTACT_TIME, Constants.CONTACT_TIME_DEFAULT));
 
 
         // If the preferences are updated from settings, grab the new values
         sharedPreferences.registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {
             @Override
             public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                tracingTime = sharedPreferences.getInt(Constants.PREF_KEY_CONTACT_TIME, Constants.CONTACT_TIME_DEFAULT);
+                tracingTime = Integer.parseInt(sharedPreferences.getString(Constants.PREF_KEY_CONTACT_TIME, Constants.CONTACT_TIME_DEFAULT));
             }
         });
 

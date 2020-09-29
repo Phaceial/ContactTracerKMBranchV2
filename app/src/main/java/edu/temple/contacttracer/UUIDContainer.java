@@ -50,6 +50,7 @@ public class UUIDContainer implements Serializable {
         else
             UUIDs.addAll(uuidContainer.getUUIDs());
 
+        removeExpiredUUIDs();
         Log.d("Total IDs", String.valueOf(UUIDs.size()));
     }
 
