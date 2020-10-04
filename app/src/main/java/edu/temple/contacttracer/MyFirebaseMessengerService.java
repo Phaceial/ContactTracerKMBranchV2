@@ -1,6 +1,7 @@
 package edu.temple.contacttracer;
 
 import android.content.Intent;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -21,7 +22,7 @@ public class MyFirebaseMessengerService extends FirebaseMessagingService {
 
     @Override
     public void onNewToken(@NonNull String s) {
-
+        Log.d("FCM Token", s);
     }
 
     @Override

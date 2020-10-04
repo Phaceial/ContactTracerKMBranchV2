@@ -14,14 +14,18 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements StartupFragment.FragmentInteractionInterface {
 
@@ -30,11 +34,17 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
     UUIDContainer uuidContainer;
     IntentFilter filter;
     ForegroundInterface app;
+    ArrayList<SedentaryEvent> receievedEvents;
+    SedentaryEvent event;
 
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-
+            String json = intent.getStringExtra(Constants.MESSSAGE_KEY);
+            Log.i("Payload", json);
+            Type type = new TypeToken<SedentaryEvent>() {}.getType();
+            event = new Gson().fromJson(json, type);
+            Log.i("Message to object", event.uuid.toString());
         }
     };
 
@@ -88,21 +98,20 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
                     .add(R.id.container, new StartupFragment())
                     .commit();
 
-        filter = new IntentFilter(getPackageName() + ".Chat_MESSAGE");
+        filter = new IntentFilter(getPackageName());
         app = (ForegroundInterface) getApplicationContext();
 
         FirebaseMessaging.getInstance().subscribeToTopic("TRACKING").addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
-                String msg = "Sucessfully Subscribed";
-
+                String msg = "Successfully Subscribed";
                 if (!task.isSuccessful())
                     msg = "Subscribing Failed";
-
-                Toast.makeText(MainActivity.this, "Successfully subscribed", Toast.LENGTH_SHORT).show();
+                Log.i("Subscription", msg);
             }
-
         });
+
+
     }
 
     @Override
