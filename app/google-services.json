@@ -1,0 +1,77 @@
+{
+  "project_info": {
+    "project_number": "764849138700",
+    "firebase_url": "https://myfcmapp-3da61.firebaseio.com",
+    "project_id": "myfcmapp-3da61",
+    "storage_bucket": "myfcmapp-3da61.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:764849138700:android:978407211752cfe0d65229",
+        "android_client_info": {
+          "package_name": "edu.temple.contacttracer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "764849138700-d03ktdu020uqt8aav30gekqqdo5id68m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDiTlDGRFcFmTbksDOV2xIOTFTqCBxpGj0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "764849138700-d03ktdu020uqt8aav30gekqqdo5id68m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:764849138700:android:d5f3d9d44b03404fd65229",
+        "android_client_info": {
+          "package_name": "edu.temple.myfcmapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "764849138700-u43q8hq6833r7t88d4cgfgk7mv6aq9uc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "edu.temple.myfcmapp",
+            "certificate_hash": "a05de47c5439288cde663b53b5583d502658363a"
+          }
+        },
+        {
+          "client_id": "764849138700-d03ktdu020uqt8aav30gekqqdo5id68m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDiTlDGRFcFmTbksDOV2xIOTFTqCBxpGj0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "764849138700-d03ktdu020uqt8aav30gekqqdo5id68m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
