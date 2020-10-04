@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
 
 import android.Manifest;
 import android.app.NotificationChannel;
@@ -12,6 +13,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -26,6 +28,7 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity implements StartupFragment.FragmentInteractionInterface {
 
@@ -34,26 +37,61 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
     UUIDContainer uuidContainer;
     IntentFilter filter;
     ForegroundInterface app;
-    ArrayList<SedentaryEvent> receievedEvents;
+    ArrayList<SedentaryEvent> selfEvents;
+    ArrayList<SedentaryEvent> receivedEvents;
     SedentaryEvent event;
+    SharedPreferences preferences;
 
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String json = intent.getStringExtra(Constants.MESSSAGE_KEY);
-            Log.i("Payload", json);
-            Type type = new TypeToken<SedentaryEvent>() {}.getType();
-            event = new Gson().fromJson(json, type);
-            Log.i("Message to object", event.uuid.toString());
+            try {
+                String json = intent.getStringExtra(Constants.MESSSAGE_KEY);
+
+                Log.i("Payload", json);
+                Type type = new TypeToken<SedentaryEvent>() {
+                }.getType();
+                event = new Gson().fromJson(json, type);
+                event.setDate();
+                Log.i("Message to object", event.uuid.toString());
+                Log.i("Message to object", String.valueOf(event.latitude));
+                Log.i("Message to object", String.valueOf(event.longitude));
+                Log.i("Message to object", String.valueOf(event.sedentary_begin));
+                Log.i("Message to object", String.valueOf(event.sedentary_end));
+                Log.i("Message to object", event.date.toString());
+            } catch (Exception e) {
+                Log.i("Invalid message received", "Invalid event received");
+            }
+            if (!checkSelf(event))
+                receivedEvents.add(0, event);
+            save();
+
         }
     };
 
     @Override
     protected void onResume() {
         super.onResume();
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        if (preferences.contains(Constants.SEDENTARY_EVENTS)) {
+            String json = preferences.getString(Constants.SEDENTARY_EVENTS, "");
+            Type type = new TypeToken<ArrayList<SedentaryEvent>>() {
+            }.getType();
+            selfEvents = new Gson().fromJson(json, type);
+        } else
+            selfEvents = new ArrayList<>();
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, filter);
+        if (preferences.contains(Constants.RECEIVED_EVENTS)) {
+            String json = preferences.getString(Constants.RECEIVED_EVENTS, "");
+            Type type = new TypeToken<ArrayList<SedentaryEvent>>() {
+            }.getType();
+            receivedEvents = new Gson().fromJson(json, type);
+        } else
+            receivedEvents = new ArrayList<>();
+
         app.setForeground(true);
+        Log.i("Self Events", selfEvents.toString());
+        Log.i("Received Events", receivedEvents.toString());
     }
 
     @Override
@@ -111,30 +149,31 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
             }
         });
 
-
     }
 
     @Override
     public void startService() {
         startService(serviceIntent);
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, filter);
     }
 
     @Override
     public void stopService() {
         stopService(serviceIntent);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
     }
 
     @Override
     public void settingsMenu() {
         fm.beginTransaction()
                 .replace(R.id.container, new SettingsFragment())
-        .addToBackStack(null)
-        .commit();
+                .addToBackStack(null)
+                .commit();
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (grantResults[0] == PackageManager.PERMISSION_DENIED){
+        if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
             Toast.makeText(this, "You must grant Location permission", Toast.LENGTH_LONG).show();
             finish();
         }
@@ -143,7 +182,41 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
     @Override
     protected void onPause() {
         super.onPause();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
         app.setForeground(false);
+    }
+
+    public boolean checkSelf(SedentaryEvent event) {
+        boolean contains = false;
+        for (SedentaryEvent stored : selfEvents) {
+            if (stored.uuid.toString().equals(event.uuid.toString()))
+                contains = true;
+        }
+        return contains;
+    }
+
+    public void inRange(SedentaryEvent event) {
+
+    }
+
+    public void save() {
+        int TWO_WEEKS = 1209600000;
+        Date twoWeeks = new Date((new Date()).getTime() - TWO_WEEKS);
+
+        for (SedentaryEvent saved : selfEvents) {
+            if (saved.date.before(twoWeeks)) {
+                selfEvents.remove(saved);
+            }
+        }
+
+        for (SedentaryEvent saved : receivedEvents) {
+            if (saved.date.before(twoWeeks)) {
+                receivedEvents.remove(saved);
+            }
+        }
+
+        String json = new Gson().toJson(selfEvents);
+        String json1 = new Gson().toJson(receivedEvents);
+        preferences.edit().putString(Constants.SEDENTARY_EVENTS, json).apply();
+        preferences.edit().putString(Constants.RECEIVED_EVENTS, json1).apply();
     }
 }

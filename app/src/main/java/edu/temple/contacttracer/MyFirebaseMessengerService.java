@@ -6,7 +6,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
@@ -29,13 +28,11 @@ public class MyFirebaseMessengerService extends FirebaseMessagingService {
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
 
-        if(app.isInForeground()){
+        //Only getting data from FCM, don't need filter for in foreground or not
+        //Keeping foreground interface if later implementation requires it
         Intent messageIntent = new Intent(getPackageName());
         messageIntent.putExtra(Constants.MESSSAGE_KEY, remoteMessage.getData().get("payload"));
         LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
-        } else{
-
-        }
     }
 
 }

@@ -5,6 +5,7 @@ import java.util.UUID;
 
 public class SedentaryEvent {
         UUID uuid;
+        Date date;
         double latitude;
         double longitude;
         long sedentary_begin;
@@ -17,6 +18,10 @@ public class SedentaryEvent {
         this.longitude = longitude;
         this.sedentary_begin = sedentary_begin;
         this.sedentary_end = sedentary_end;
+    }
+
+    public void setDate(){
+        this.date = new Date();
     }
 }
 

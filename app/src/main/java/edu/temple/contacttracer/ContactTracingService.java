@@ -71,6 +71,8 @@ public class ContactTracingService extends Service {
         } else
             sedentaryEvents = new ArrayList<>();
 
+        Log.i("Saved self Events", sedentaryEvents.toString());
+
         uuidContainer = UUIDContainer.getUUIDContainer(this);;
 
 
@@ -127,7 +129,7 @@ public class ContactTracingService extends Service {
 
         startForeground(1, notification);
 
-        return super.onStartCommand(intent, flags, startId);
+        return START_STICKY;
     }
 
     /** Should be called when a user has loitered in a location for
@@ -135,7 +137,8 @@ public class ContactTracingService extends Service {
      */
     private void tracePointDetected(Location location) {
         SedentaryEvent sedentaryEvent = new SedentaryEvent(uuidContainer.getCurrentUUID().getUuid(),lastLocation.getLatitude(), lastLocation.getLongitude(), lastLocation.getTime(), location.getTime());
-        sedentaryEvents.add(sedentaryEvent);
+        sedentaryEvents.add(0,sedentaryEvent);
+        sedentaryEvents.get(0).setDate();
         save();
         sendPost(sedentaryEvent);
     }
