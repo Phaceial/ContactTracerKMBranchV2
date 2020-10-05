@@ -17,7 +17,8 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <service
-            android:name=".ContactTracingService"
+            android:name="edu.temple.contacttracer.ContactTracingService"
+            android:foregroundServiceType="location"
             android:enabled="true"
             android:exported="true"></service>
         <service
@@ -36,6 +37,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAORc0z2FAOyvjzcJkxc_BIIWGfKdv4q2k" />
     </application>
 
 </manifest>

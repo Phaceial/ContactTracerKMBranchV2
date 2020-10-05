@@ -15,6 +15,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
@@ -35,36 +36,46 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
     FragmentManager fm;
     Intent serviceIntent;
     UUIDContainer uuidContainer;
-    IntentFilter filter;
+    IntentFilter broadcastFilter;
     ForegroundInterface app;
     ArrayList<SedentaryEvent> selfEvents;
     ArrayList<SedentaryEvent> receivedEvents;
     SedentaryEvent event;
     SharedPreferences preferences;
+    Location location;
 
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            try {
-                String json = intent.getStringExtra(Constants.MESSSAGE_KEY);
+            Log.i("Broadcast", intent.getAction());
+            Log.i("Broadcast", getPackageName());
+            if(intent.getAction().equals(Constants.BROADCAST_MESSAGE)) {
+                try {
+                    String json = intent.getStringExtra(Constants.MESSSAGE_KEY);
 
-                Log.i("Payload", json);
-                Type type = new TypeToken<SedentaryEvent>() {
-                }.getType();
-                event = new Gson().fromJson(json, type);
-                event.setDate();
-                Log.i("Message to object", event.uuid.toString());
-                Log.i("Message to object", String.valueOf(event.latitude));
-                Log.i("Message to object", String.valueOf(event.longitude));
-                Log.i("Message to object", String.valueOf(event.sedentary_begin));
-                Log.i("Message to object", String.valueOf(event.sedentary_end));
-                Log.i("Message to object", event.date.toString());
-            } catch (Exception e) {
-                Log.i("Invalid message received", "Invalid event received");
+                    Log.i("Payload", json);
+                    Type type = new TypeToken<SedentaryEvent>() {
+                    }.getType();
+                    event = new Gson().fromJson(json, type);
+                    event.setDate();
+                    Log.i("Message to object", event.uuid.toString());
+                    Log.i("Message to object", String.valueOf(event.latitude));
+                    Log.i("Message to object", String.valueOf(event.longitude));
+                    Log.i("Message to object", String.valueOf(event.sedentary_begin));
+                    Log.i("Message to object", String.valueOf(event.sedentary_end));
+                    Log.i("Message to object", event.date.toString());
+                } catch (Exception e) {
+                    Log.i("Invalid message received", "Invalid event received");
+                }
+                if (!checkSelf(event) && inRange(event)) {
+                    receivedEvents.add(0, event);
+                    Log.i("Other User Event", "saved to list");
+                }
+                save();
+            } else if(intent.getAction().equals(Constants.BROADCAST_LOCATION)) {
+                location = intent.getParcelableExtra(Constants.LOCATION_KEY);
+                Log.i("Broadcast", "Location Updated");
             }
-            if (!checkSelf(event))
-                receivedEvents.add(0, event);
-            save();
 
         }
     };
@@ -136,7 +147,11 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
                     .add(R.id.container, new StartupFragment())
                     .commit();
 
-        filter = new IntentFilter(getPackageName());
+        broadcastFilter = new IntentFilter();
+        broadcastFilter.addAction(Constants.BROADCAST_MESSAGE);
+        broadcastFilter.addAction(Constants.BROADCAST_LOCATION);
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, broadcastFilter);
+
         app = (ForegroundInterface) getApplicationContext();
 
         FirebaseMessaging.getInstance().subscribeToTopic("TRACKING").addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -154,13 +169,11 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
     @Override
     public void startService() {
         startService(serviceIntent);
-        LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, filter);
     }
 
     @Override
     public void stopService() {
         stopService(serviceIntent);
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
     }
 
     @Override
@@ -194,8 +207,15 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
         return contains;
     }
 
-    public void inRange(SedentaryEvent event) {
+    public boolean inRange(SedentaryEvent event) {
+        boolean inRange = false;
+        Location eventLocation = new Location("");
+        eventLocation.setLatitude(event.latitude);
+        eventLocation.setLongitude(event.longitude);
+        if(location.distanceTo(eventLocation) <= 10)
+            inRange = true;
 
+        return inRange;
     }
 
     public void save() {
@@ -218,5 +238,11 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
         String json1 = new Gson().toJson(receivedEvents);
         preferences.edit().putString(Constants.SEDENTARY_EVENTS, json).apply();
         preferences.edit().putString(Constants.RECEIVED_EVENTS, json1).apply();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
     }
 }

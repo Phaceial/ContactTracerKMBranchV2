@@ -30,7 +30,7 @@ public class MyFirebaseMessengerService extends FirebaseMessagingService {
 
         //Only getting data from FCM, don't need filter for in foreground or not
         //Keeping foreground interface if later implementation requires it
-        Intent messageIntent = new Intent(getPackageName());
+        Intent messageIntent = new Intent(Constants.BROADCAST_MESSAGE);
         messageIntent.putExtra(Constants.MESSSAGE_KEY, remoteMessage.getData().get("payload"));
         LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
     }

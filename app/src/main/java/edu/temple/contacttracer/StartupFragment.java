@@ -1,6 +1,7 @@
 package edu.temple.contacttracer;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -51,14 +52,14 @@ public class StartupFragment extends Fragment {
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                parent.startService();
+                getActivity().startService(new Intent(getActivity(), ContactTracingService.class));
             }
         });
 
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                parent.stopService();
+                getActivity().stopService(new Intent(getActivity(), ContactTracingService.class));
             }
         });
         stopButton = v.findViewById(R.id.stopServiceButton);

@@ -9,5 +9,8 @@ public class Constants {
     public static final String MESSSAGE_KEY = "message_key";
     public static final String SEDENTARY_EVENTS = "sedentary_events";
     public static final String RECEIVED_EVENTS = "received_events";
+    public static final String LOCATION_KEY = "location_key";
+    public static final String BROADCAST_MESSAGE = "message_broadcast";
+    public static final String BROADCAST_LOCATION = "location_broadcast";
 
 }

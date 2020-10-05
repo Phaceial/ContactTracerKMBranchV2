@@ -2,6 +2,8 @@ package edu.temple.contacttracer;
 
 import android.Manifest;
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
@@ -14,6 +16,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
+import androidx.core.app.NotificationCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 
 import com.android.volley.AuthFailureError;
@@ -21,7 +25,6 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
@@ -32,17 +35,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static android.content.ContentValues.TAG;
+
 
 public class ContactTracingService extends Service {
-
-    LocationManager locationManager;
-    LocationListener locationListener;
+    public static final String channelID = "Tracing Service";
+    LocationManager lm;
+    LocationListener ll;
 
     Location lastLocation;
     SharedPreferences sharedPreferences;
     ArrayList<SedentaryEvent> sedentaryEvents;
-    JsonObjectRequest jsonObjectRequest;
     UUIDContainer uuidContainer;
+    Intent locationIntent;
 
     private int tracingTime;
     private final int LOCATION_UPDATE_DISTANCE = 10;
@@ -84,50 +89,66 @@ public class ContactTracingService extends Service {
             }
         });
 
-        locationManager = getSystemService(LocationManager.class);
-        locationListener = new LocationListener() {
+
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        lm = getSystemService(LocationManager.class);
+        Intent notificationIntent = new Intent(ContactTracingService.this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(ContactTracingService.this, 0, notificationIntent, 0);
+
+
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        NotificationChannel channel = new NotificationChannel(channelID, "Tracing Notifications", NotificationManager.IMPORTANCE_HIGH);
+        nm.createNotificationChannel(channel);
+
+        Notification notification = new NotificationCompat.Builder(this, channelID)
+                .setSmallIcon(R.drawable.ic_launcher_background)
+                .setContentTitle("Contact Tracing")
+                .setContentText("Currently Tracing location")
+                .setContentIntent(pendingIntent)
+                .build();
+
+        startForeground(1, notification);
+
+        ll = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
+                Log.i(TAG, "lat updated " + location.getLatitude());
+                Log.i(TAG, "long updated " + location.getLongitude());
                 if (lastLocation != null) {
                     if (location.getTime() - lastLocation.getTime() >= (tracingTime * 1000 * 60)) {
                         Log.i("Event ", " has been triggered");
                         tracePointDetected(location);
                     }
                 }
+                locationIntent = new Intent(Constants.BROADCAST_LOCATION);
+                locationIntent.putExtra(Constants.LOCATION_KEY, location);
+                LocalBroadcastManager.getInstance(ContactTracingService.this).sendBroadcast(locationIntent);
+
                 lastLocation = location;
             }
 
-            public void onStatusChanged(String provider, int status, Bundle extras) { }
-            public void onProviderEnabled(String provider) {}
-            public void onProviderDisabled(String provider) {}
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+
+            }
         };
-
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-
-            // GPS is the only really useful provider here, since we need
-            // high fidelity meter-level accuracy
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                    0,
-                    LOCATION_UPDATE_DISTANCE,
-                    locationListener);
+            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, LOCATION_UPDATE_DISTANCE, ll);
         }
-
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent =
-                PendingIntent.getActivity(this, 0, notificationIntent, 0);
-
-        Notification notification = new Notification.Builder(this, "default")
-                .setContentTitle("Contact Tracing Active")
-                .setContentText("Click to change app settings")
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setContentIntent(pendingIntent)
-                .build();
-
-        startForeground(1, notification);
 
         return START_STICKY;
     }
@@ -148,7 +169,7 @@ public class ContactTracingService extends Service {
         super.onDestroy();
 
         // Memory leaks are bad, m'kay?
-        locationManager.removeUpdates(locationListener);
+        lm.removeUpdates(ll);
     }
 
     private void sendPost(final SedentaryEvent sedentaryEvent) {
