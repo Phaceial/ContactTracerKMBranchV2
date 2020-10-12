@@ -16,20 +16,21 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
         <service
-            android:name="edu.temple.contacttracer.ContactTracingService"
-            android:foregroundServiceType="location"
+            android:name=".ContactTracingService"
             android:enabled="true"
-            android:exported="true"></service>
-        <service
-            android:name=".MyFirebaseMessengerService">
+            android:exported="true"
+            android:foregroundServiceType="location" />
+        <service android:name=".MyFirebaseMessengerService">
             <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
             <intent-filter>
-                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
             </intent-filter>
         </service>
+
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -37,6 +38,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyAORc0z2FAOyvjzcJkxc_BIIWGfKdv4q2k" />

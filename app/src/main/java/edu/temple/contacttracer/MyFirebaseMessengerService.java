@@ -1,11 +1,15 @@
 package edu.temple.contacttracer;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Parcelable;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 
@@ -21,7 +25,6 @@ import org.json.JSONObject;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Objects;
 
 public class MyFirebaseMessengerService extends FirebaseMessagingService {
 
@@ -32,8 +35,6 @@ public class MyFirebaseMessengerService extends FirebaseMessagingService {
     SharedPreferences preferences;
     ArrayList<SedentaryEvent> receivedEvents;
     Intent messageIntent;
-    int index;
-    boolean matched;
 
     @Override
     public void onCreate() {
@@ -79,12 +80,31 @@ public class MyFirebaseMessengerService extends FirebaseMessagingService {
                                 if(app.isInForeground()) {
                                     Log.i("Foreground", String.valueOf(app.isInForeground()));
                                     messageIntent = new Intent(Constants.BROADCAST_CONTACT);
-                                    String json1 = new Gson().toJson(receivedEvents.get(index));
-                                    Log.i("Payload", json);
+                                    String json1 = new Gson().toJson(receivedEvents.get(j));
+                                    Log.i("Payload", json1);
                                     messageIntent.putExtra(Constants.BROADCAST_MESSAGE, json1);
                                     LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
                                 } else {
                                     Log.i("Not Foreground", "need to handle this");
+                                    Intent notificationIntent = new Intent(this, TraceFragment.class);
+                                    String json1 = new Gson().toJson(receivedEvents.get(j));
+                                    Log.i("Payload", json1);
+                                    notificationIntent.putExtra(Constants.BROADCAST_MESSAGE, json1);
+                                    PendingIntent pendingIntent = PendingIntent.getBroadcast(MyFirebaseMessengerService.this, 0, notificationIntent, 0);
+
+
+                                    NotificationManager nm = getSystemService(NotificationManager.class);
+                                    NotificationChannel channel = new NotificationChannel("try different", "Tracing Notifications", NotificationManager.IMPORTANCE_HIGH);
+                                    nm.createNotificationChannel(channel);
+
+                                    Notification notification = new NotificationCompat.Builder(this, "try different")
+                                            .setSmallIcon(R.drawable.ic_launcher_background)
+                                            .setContentTitle("Contact Tracing")
+                                            .setContentText("You've come in contact with someone who tested for Covid-19")
+                                            .setContentIntent(pendingIntent)
+                                            .setAutoCancel(true)
+                                            .build();
+                                    nm.notify(1, notification);
                                 }
                             }
                         }
@@ -98,7 +118,6 @@ public class MyFirebaseMessengerService extends FirebaseMessagingService {
 
     public boolean checkSelf(JSONArray array) throws JSONException {
         uuidContainer = UUIDContainer.getUUIDContainer(this);
-
 
         boolean contains = false;
         Log.i("checking uuids", array.get(0).toString());

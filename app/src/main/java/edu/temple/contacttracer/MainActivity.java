@@ -187,7 +187,7 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
         broadcastFilter.addAction(Constants.BROADCAST_MESSAGE);
         broadcastFilter.addAction(Constants.BROADCAST_LOCATION);
         broadcastFilter.addAction(Constants.BROADCAST_CONTACT);
-        LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, broadcastFilter);
+        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(broadcastReceiver, broadcastFilter);
 
         app = (ForegroundInterface) getApplicationContext();
 

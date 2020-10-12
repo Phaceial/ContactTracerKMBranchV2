@@ -39,7 +39,7 @@ import static android.content.ContentValues.TAG;
 
 
 public class ContactTracingService extends Service {
-    public static final String channelID = "Tracing Service";
+
     LocationManager lm;
     LocationListener ll;
 
@@ -100,10 +100,10 @@ public class ContactTracingService extends Service {
 
 
         NotificationManager nm = getSystemService(NotificationManager.class);
-        NotificationChannel channel = new NotificationChannel(channelID, "Tracing Notifications", NotificationManager.IMPORTANCE_HIGH);
+        NotificationChannel channel = new NotificationChannel(Constants.channelID, "Tracing Notifications", NotificationManager.IMPORTANCE_HIGH);
         nm.createNotificationChannel(channel);
 
-        Notification notification = new NotificationCompat.Builder(this, channelID)
+        Notification notification = new NotificationCompat.Builder(this, Constants.channelID)
                 .setSmallIcon(R.drawable.ic_launcher_background)
                 .setContentTitle("Contact Tracing")
                 .setContentText("Currently Tracing location")
