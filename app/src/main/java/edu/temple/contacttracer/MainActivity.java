@@ -116,8 +116,23 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
     protected void onResume() {
         super.onResume();
 
-       if(getIntent().getExtras() != null){
+        Bundle extra = getIntent().getExtras();
+       if(extra != null){
+           String json = extra.getString(Constants.BROADCAST_MESSAGE);
+           Log.i("Payload", "json");
+           Type type = new TypeToken<SedentaryEvent>() {
+           }.getType();
+           event = new Gson().fromJson(json, type);
+           Log.i("Message to object", String.valueOf(event.latitude));
+           Log.i("Message to object", String.valueOf(event.longitude));
+           TraceFragment mapFragment = new TraceFragment();
+           LatLng loc = new LatLng(event.latitude, event.longitude);
+           fm.beginTransaction()
+                   .replace(R.id.container, mapFragment)
+                   .addToBackStack(null)
+                   .commit();
 
+           mapFragment.setLocation(loc, event.date);
 
        }
 

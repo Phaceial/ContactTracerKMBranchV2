@@ -87,10 +87,10 @@ public class MyFirebaseMessengerService extends FirebaseMessagingService {
                                     LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
                                 } else {
                                     Log.i("Not Foreground", "make notification work");
-                                    Intent notificationIntent = new Intent(Constants.BROADCAST_CONTACT);
+                                    Intent notificationIntent = new Intent(this, MainActivity.class);
                                     String json1 = new Gson().toJson(receivedEvents.get(j));
                                     notificationIntent.putExtra(Constants.BROADCAST_MESSAGE, json1);
-                                    PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, notificationIntent, PendingIntent.FLAG_ONE_SHOT);
+                                    PendingIntent pendingIntent = PendingIntent.getActivity(this, 1, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
 
                                     NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
