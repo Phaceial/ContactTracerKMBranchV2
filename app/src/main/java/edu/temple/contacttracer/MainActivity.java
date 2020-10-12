@@ -63,8 +63,6 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.i("Broadcast", intent.getAction());
-            Log.i("Broadcast", getPackageName());
             if (intent.getAction().equals(Constants.BROADCAST_MESSAGE)) {
                 try {
                     String json = intent.getStringExtra(Constants.MESSSAGE_KEY);
@@ -117,6 +115,12 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
     @Override
     protected void onResume() {
         super.onResume();
+
+       if(getIntent().getExtras() != null){
+
+
+       }
+
         app.setForeground(true);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         if (preferences.contains(Constants.SEDENTARY_EVENTS)) {
@@ -321,9 +325,6 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
 
     }
 
-    public void launchMap() {
-
-    }
 
     @Override
     protected void onDestroy() {

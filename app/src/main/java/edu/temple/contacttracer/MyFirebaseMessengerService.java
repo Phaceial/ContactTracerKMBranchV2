@@ -4,6 +4,8 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
@@ -81,28 +83,26 @@ public class MyFirebaseMessengerService extends FirebaseMessagingService {
                                     Log.i("Foreground", String.valueOf(app.isInForeground()));
                                     messageIntent = new Intent(Constants.BROADCAST_CONTACT);
                                     String json1 = new Gson().toJson(receivedEvents.get(j));
-                                    Log.i("Payload", json1);
                                     messageIntent.putExtra(Constants.BROADCAST_MESSAGE, json1);
                                     LocalBroadcastManager.getInstance(this).sendBroadcast(messageIntent);
                                 } else {
-                                    Log.i("Not Foreground", "need to handle this");
-                                    Intent notificationIntent = new Intent(this, TraceFragment.class);
+                                    Log.i("Not Foreground", "make notification work");
+                                    Intent notificationIntent = new Intent(Constants.BROADCAST_CONTACT);
                                     String json1 = new Gson().toJson(receivedEvents.get(j));
-                                    Log.i("Payload", json1);
                                     notificationIntent.putExtra(Constants.BROADCAST_MESSAGE, json1);
-                                    PendingIntent pendingIntent = PendingIntent.getBroadcast(MyFirebaseMessengerService.this, 0, notificationIntent, 0);
+                                    PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, notificationIntent, PendingIntent.FLAG_ONE_SHOT);
 
 
-                                    NotificationManager nm = getSystemService(NotificationManager.class);
-                                    NotificationChannel channel = new NotificationChannel("try different", "Tracing Notifications", NotificationManager.IMPORTANCE_HIGH);
+                                    NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                                    NotificationChannel channel = new NotificationChannel(Constants.channelID, "Covid-19 Notification", NotificationManager.IMPORTANCE_HIGH);
                                     nm.createNotificationChannel(channel);
 
-                                    Notification notification = new NotificationCompat.Builder(this, "try different")
+                                    Notification notification = new NotificationCompat.Builder(this, Constants.channelID)
                                             .setSmallIcon(R.drawable.ic_launcher_background)
                                             .setContentTitle("Contact Tracing")
                                             .setContentText("You've come in contact with someone who tested for Covid-19")
-                                            .setContentIntent(pendingIntent)
                                             .setAutoCancel(true)
+                                            .setContentIntent(pendingIntent)
                                             .build();
                                     nm.notify(1, notification);
                                 }

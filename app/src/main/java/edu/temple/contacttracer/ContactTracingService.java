@@ -68,6 +68,7 @@ public class ContactTracingService extends Service {
         // used by Settings framework
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         tracingTime = Integer.parseInt(sharedPreferences.getString(Constants.PREF_KEY_CONTACT_TIME, Constants.CONTACT_TIME_DEFAULT));
+
         System.out.println("this is tracing time " + tracingTime);
         if (sharedPreferences.contains(Constants.SEDENTARY_EVENTS)) {
             String json = sharedPreferences.getString(Constants.SEDENTARY_EVENTS, "");
@@ -97,6 +98,9 @@ public class ContactTracingService extends Service {
         lm = getSystemService(LocationManager.class);
         Intent notificationIntent = new Intent(ContactTracingService.this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(ContactTracingService.this, 0, notificationIntent, 0);
+        int traceDistance = Integer.parseInt(PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .getString(Constants.PREF_KEY_DISTANCE, Constants.DISTANCE_DEFAULT));
 
 
         NotificationManager nm = getSystemService(NotificationManager.class);
@@ -147,7 +151,7 @@ public class ContactTracingService extends Service {
             }
         };
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, LOCATION_UPDATE_DISTANCE, ll);
+            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, traceDistance, ll);
         }
 
         return START_STICKY;
