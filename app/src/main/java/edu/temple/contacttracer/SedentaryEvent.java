@@ -1,5 +1,7 @@
 package edu.temple.contacttracer;
 
+import android.os.Parcelable;
+
 import java.util.Date;
 import java.util.UUID;
 

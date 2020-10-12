@@ -3,6 +3,8 @@ package edu.temple.contacttracer;
 import android.content.Context;
 import android.util.Log;
 
+import org.json.JSONArray;
+
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -93,5 +95,15 @@ public class UUIDContainer implements Serializable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public JSONArray toJsonArray(){
+        JSONArray array = new JSONArray();
+
+        for(TraceUUID uuid : UUIDs){
+            array.put(uuid.getUuid());
+        }
+
+        return array;
     }
 }

@@ -20,18 +20,30 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONArray;
+
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
-public class MainActivity extends AppCompatActivity implements StartupFragment.FragmentInteractionInterface {
+public class MainActivity extends AppCompatActivity implements StartupFragment.FragmentInteractionInterface, DatePickerFragment.DateInterface {
 
     FragmentManager fm;
     Intent serviceIntent;
@@ -44,12 +56,16 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
     SharedPreferences preferences;
     Location location;
 
+
+    private final String TRACKING_TOPIC = "TRACKING";
+    private final String TRACING_TOPIC = "TRACING";
+
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.i("Broadcast", intent.getAction());
             Log.i("Broadcast", getPackageName());
-            if(intent.getAction().equals(Constants.BROADCAST_MESSAGE)) {
+            if (intent.getAction().equals(Constants.BROADCAST_MESSAGE)) {
                 try {
                     String json = intent.getStringExtra(Constants.MESSSAGE_KEY);
 
@@ -64,17 +80,35 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
                     Log.i("Message to object", String.valueOf(event.sedentary_begin));
                     Log.i("Message to object", String.valueOf(event.sedentary_end));
                     Log.i("Message to object", event.date.toString());
+
+                    if (!checkSelf(event) && inRange(event)) {
+                        receivedEvents.add(0, event);
+                        Log.i("Other User Event", "saved to list");
+                        save(receivedEvents, Constants.RECEIVED_EVENTS);
+                    }
                 } catch (Exception e) {
                     Log.i("Invalid message received", "Invalid event received");
                 }
-                if (!checkSelf(event) && inRange(event)) {
-                    receivedEvents.add(0, event);
-                    Log.i("Other User Event", "saved to list");
-                }
-                save();
-            } else if(intent.getAction().equals(Constants.BROADCAST_LOCATION)) {
+
+            } else if (intent.getAction().equals(Constants.BROADCAST_LOCATION)) {
                 location = intent.getParcelableExtra(Constants.LOCATION_KEY);
                 Log.i("Broadcast", "Location Updated");
+            } else if (intent.getAction().equals(Constants.BROADCAST_CONTACT)) {
+                String json = intent.getStringExtra(Constants.BROADCAST_MESSAGE);
+                Log.i("Payload", "json");
+                Type type = new TypeToken<SedentaryEvent>() {
+                }.getType();
+                event = new Gson().fromJson(json, type);
+                Log.i("Message to object", String.valueOf(event.latitude));
+                Log.i("Message to object", String.valueOf(event.longitude));
+                TraceFragment mapFragment = new TraceFragment();
+                LatLng loc = new LatLng(event.latitude, event.longitude);
+                fm.beginTransaction()
+                        .replace(R.id.container, mapFragment)
+                        .addToBackStack(null)
+                        .commit();
+
+                mapFragment.setLocation(loc, event.date);
             }
 
         }
@@ -83,6 +117,7 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
     @Override
     protected void onResume() {
         super.onResume();
+        app.setForeground(true);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         if (preferences.contains(Constants.SEDENTARY_EVENTS)) {
             String json = preferences.getString(Constants.SEDENTARY_EVENTS, "");
@@ -103,6 +138,7 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
         app.setForeground(true);
         Log.i("Self Events", selfEvents.toString());
         Log.i("Received Events", receivedEvents.toString());
+        Log.i("Foreground", String.valueOf(app.isInForeground()));
     }
 
     @Override
@@ -150,11 +186,22 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
         broadcastFilter = new IntentFilter();
         broadcastFilter.addAction(Constants.BROADCAST_MESSAGE);
         broadcastFilter.addAction(Constants.BROADCAST_LOCATION);
+        broadcastFilter.addAction(Constants.BROADCAST_CONTACT);
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, broadcastFilter);
 
         app = (ForegroundInterface) getApplicationContext();
 
-        FirebaseMessaging.getInstance().subscribeToTopic("TRACKING").addOnCompleteListener(new OnCompleteListener<Void>() {
+        FirebaseMessaging.getInstance().subscribeToTopic(TRACKING_TOPIC).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                String msg = "Successfully Subscribed";
+                if (!task.isSuccessful())
+                    msg = "Subscribing Failed";
+                Log.i("Subscription", msg);
+            }
+        });
+
+        FirebaseMessaging.getInstance().subscribeToTopic(TRACING_TOPIC).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 String msg = "Successfully Subscribed";
@@ -185,6 +232,13 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
     }
 
     @Override
+    public void reportPositive() {
+        DatePickerFragment newFragment = new DatePickerFragment();
+        newFragment.show(fm, null);
+
+    }
+
+    @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
             Toast.makeText(this, "You must grant Location permission", Toast.LENGTH_LONG).show();
@@ -196,13 +250,18 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
     protected void onPause() {
         super.onPause();
         app.setForeground(false);
+        Log.i("Foreground", String.valueOf(app.isInForeground()));
     }
 
     public boolean checkSelf(SedentaryEvent event) {
         boolean contains = false;
-        for (SedentaryEvent stored : selfEvents) {
-            if (stored.uuid.toString().equals(event.uuid.toString()))
-                contains = true;
+        try {
+            for (SedentaryEvent stored : selfEvents) {
+                if (stored.uuid.toString().equals(event.uuid.toString()))
+                    contains = true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return contains;
     }
@@ -212,32 +271,58 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
         Location eventLocation = new Location("");
         eventLocation.setLatitude(event.latitude);
         eventLocation.setLongitude(event.longitude);
-        if(location.distanceTo(eventLocation) <= 10)
+        if (location.distanceTo(eventLocation) <= 10)
             inRange = true;
 
         return inRange;
     }
 
-    public void save() {
+    public void save(ArrayList<SedentaryEvent> list, String string) {
         int TWO_WEEKS = 1209600000;
         Date twoWeeks = new Date((new Date()).getTime() - TWO_WEEKS);
 
-        for (SedentaryEvent saved : selfEvents) {
+        for (SedentaryEvent saved : list) {
             if (saved.date.before(twoWeeks)) {
-                selfEvents.remove(saved);
+                list.remove(saved);
             }
         }
 
-        for (SedentaryEvent saved : receivedEvents) {
-            if (saved.date.before(twoWeeks)) {
-                receivedEvents.remove(saved);
-            }
-        }
+        String json = new Gson().toJson(list);
+        preferences.edit().putString(string, json).apply();
+    }
 
-        String json = new Gson().toJson(selfEvents);
-        String json1 = new Gson().toJson(receivedEvents);
-        preferences.edit().putString(Constants.SEDENTARY_EVENTS, json).apply();
-        preferences.edit().putString(Constants.RECEIVED_EVENTS, json1).apply();
+    public void reportPositiveDate(final Date date) {
+        Log.i("Processing list", date.toString());
+        String url = "https://kamorris.com/lab/ct_tracing.php";
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+        final JSONArray uuids = uuidContainer.toJsonArray();
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.i("Volley Tracing Works", response.toString());
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.i("Volley Tracing Failure", error.toString());
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> params = new HashMap<>();
+                params.put("date", String.valueOf(date.getTime()));
+                params.put("uuids", uuids.toString());
+                return params;
+            }
+        };
+
+        queue.add(stringRequest);
+
+    }
+
+    public void launchMap() {
+
     }
 
     @Override
@@ -245,4 +330,5 @@ public class MainActivity extends AppCompatActivity implements StartupFragment.F
         super.onDestroy();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
     }
+
 }

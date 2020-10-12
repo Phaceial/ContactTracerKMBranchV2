@@ -19,7 +19,7 @@ import android.widget.Button;
 public class StartupFragment extends Fragment {
 
     FragmentInteractionInterface parent;
-    Button startButton, stopButton;
+    Button startButton, stopButton, reportButton;
 
     public StartupFragment() {}
 
@@ -48,21 +48,30 @@ public class StartupFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_startup, container, false);
         startButton = v.findViewById(R.id.startServiceButton);
         stopButton = v.findViewById(R.id.stopServiceButton);
+        reportButton = v.findViewById(R.id.reportButton);
 
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getActivity().startService(new Intent(getActivity(), ContactTracingService.class));
+                parent.startService();
             }
         });
 
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getActivity().stopService(new Intent(getActivity(), ContactTracingService.class));
+                parent.stopService();
             }
         });
-        stopButton = v.findViewById(R.id.stopServiceButton);
+
+        reportButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                parent.reportPositive();
+            }
+        });
+
+
 
         return v;
     }
@@ -87,5 +96,6 @@ public class StartupFragment extends Fragment {
         void startService();
         void stopService();
         void settingsMenu();
+        void reportPositive();
     }
 }

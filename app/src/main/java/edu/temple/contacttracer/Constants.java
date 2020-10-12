@@ -12,5 +12,6 @@ public class Constants {
     public static final String LOCATION_KEY = "location_key";
     public static final String BROADCAST_MESSAGE = "message_broadcast";
     public static final String BROADCAST_LOCATION = "location_broadcast";
+    public static final String BROADCAST_CONTACT = "contact_broadcast";
 
 }
